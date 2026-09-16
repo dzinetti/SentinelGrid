@@ -15,7 +15,6 @@ variable "environment" {
   description = "Ambiente di deploy (dev,prod)"
 }
 
-/*
 variable "vpc_cidr" {
   type        = string
   description = "Blocco CIDR per la VPC"
@@ -23,10 +22,8 @@ variable "vpc_cidr" {
 
 variable "subnets" {
   type = map(object({
-    cidr   = string
-    az     = string
-    public = bool
+    cidr = string
+    az   = string
   }))
   description = "Mappa delle subnet pubbliche e private"
 }
-*/

@@ -6,6 +6,13 @@ module "tags" {
   environment   = var.environment
 }
 
+# 2. Modulo ECR 
+module "ecr" {
+  source = "../../modules/ecr"
+
+  common_tags = module.tags.common_tags
+}
+
 /*# 2. Modulo VPC 
 module "vpc" {
   source = "../../modules/vpc"
@@ -26,12 +33,7 @@ module "security" {
   vpc_id      = module.vpc.vpc_id # Collegato all'output di vpc
 }
 
-# 4. Modulo ECR 
-module "ecr" {
-  source = "../../modules/ecr"
 
-  common_tags = module.tags.common_tags
-}
 
 # 5. Modulo EKS 
 module "eks" {

@@ -1,9 +1,7 @@
 output "common_tags" {
   description = "Mappa dei tag comuni per l'infrastruttura"
   value = {
-    Project     = var.project_name
+    CentroDiCosto = var.CentroDiCosto
     Environment = var.environment
-    Owner       = var.owner
-    ManagedBy   = "Terraform"
   }
 }

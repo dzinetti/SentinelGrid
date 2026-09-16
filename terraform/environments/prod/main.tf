@@ -1,40 +1,49 @@
+# 1. Modulo TAGS
 module "tags" {
   source = "../../modules/tags"
 
-  project_name = var.project_name
-  environment  = var.environment
-  owner        = var.owner
+  CentroDiCosto = var.CentroDiCosto
+  environment   = var.environment
 }
 
+/*# 2. Modulo VPC 
 module "vpc" {
-  source = "../../modules/network"
+  source = "../../modules/vpc"
 
-  project_name = var.project_name
-  environment  = var.environment
-  vpc_cidr     = var.vpc_cidr
-  subnets      = var.subnets
-  common_tags  = module.tags.common_tags
+  environment = var.environment
+  vpc_cidr    = var.vpc_cidr
+  subnets     = var.subnets
+  common_tags = module.tags.common_tags
 }
 
-module "storage" {
-  source = "../../modules/storage"
-
-  project_name = var.project_name
-  environment  = var.environment
-  common_tags  = module.tags.common_tags
-
-  network_name = module.network.vpc_name
-}
-
+# 3. Modulo SECURITY 
 module "security" {
   source = "../../modules/security"
 
-  project_name = var.project_name
-  environment  = var.environment
+  environment = var.environment
+  common_tags = module.tags.common_tags
+  vpc_cidr    = var.vpc_cidr
+  vpc_id      = module.vpc.vpc_id # Collegato all'output di vpc
+}
+
+# 4. Modulo ECR 
+module "ecr" {
+  source = "../../modules/ecr"
 
   common_tags = module.tags.common_tags
-
-  vpc_cidr = var.vpc_cidr
-  vpc_id   = module.network.vpc_id
-  rules    = var.rules
 }
+
+# 5. Modulo EKS 
+module "eks" {
+  source = "../../modules/eks"
+
+  environment      = var.environment
+  common_tags      = module.tags.common_tags
+  vpc_id           = module.vpc.vpc_id
+  private_subnets  = module.vpc.private_subnet_ids
+  cluster_sg_id    = module.security.cluster_sg_id
+  nodes_sg_id      = module.security.nodes_sg_id
+  cluster_role_arn = module.security.cluster_role_arn
+  node_role_arn    = module.security.node_role_arn
+}
+*/

@@ -16,15 +16,6 @@ module "vpc" {
   common_tags  = module.tags.common_tags
 }
 
-module "storage" {
-  source = "../../modules/storage"
-
-  project_name = var.project_name
-  environment  = var.environment
-  common_tags  = module.tags.common_tags
-
-  network_name = module.network.vpc_name
-}
 
 module "security" {
   source = "../../modules/security"

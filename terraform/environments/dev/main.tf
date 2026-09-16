@@ -7,7 +7,7 @@ module "tags" {
 }
 
 module "vpc" {
-  source = "../../modules/network"
+  source = "../../modules/vpc"
 
   project_name = var.project_name
   environment  = var.environment
@@ -15,7 +15,7 @@ module "vpc" {
   subnets      = var.subnets
   common_tags  = module.tags.common_tags
 }
-
+/*
 module "storage" {
   source = "../../modules/storage"
 
@@ -25,7 +25,7 @@ module "storage" {
 
   network_name = module.network.vpc_name
 }
-
+*/
 module "security" {
   source = "../../modules/security"
 
@@ -35,6 +35,6 @@ module "security" {
   common_tags = module.tags.common_tags
 
   vpc_cidr = var.vpc_cidr
-  vpc_id   = module.network.vpc_id
+  vpc_id   = module.vpc.vpc_id
   rules    = var.rules
 }

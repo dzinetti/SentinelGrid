@@ -9,3 +9,5 @@ COPY worker.py .
 
 # TODO: questo Dockerfile non ha ancora un comando di avvio.
 # Aggiungere l'istruzione che esegue worker.py con python3.
+
+CMD ["python3", "worker.py"]

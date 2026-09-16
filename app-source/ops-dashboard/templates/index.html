@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="it">
+<head>
+  <meta charset="utf-8">
+  <title>SentinelGrid - Sala Operativa</title>
+  <style>
+    body { font-family: Arial, sans-serif; background: #101418; color: #e6e6e6; margin: 2rem; }
+    h1 { color: #f2a83c; }
+    table { width: 100%; border-collapse: collapse; margin-top: 1rem; }
+    th, td { padding: 0.5rem 0.8rem; text-align: left; border-bottom: 1px solid #2a2f36; }
+    th { color: #9fb3c8; text-transform: uppercase; font-size: 0.8rem; }
+    .status-open { color: #ff6b6b; font-weight: bold; }
+    .status-closed { color: #6bcf6b; }
+    .error { background: #4a1f1f; padding: 1rem; border-radius: 4px; }
+  </style>
+</head>
+<body>
+  <h1>SentinelGrid - Situazione in tempo reale</h1>
+
+  {% if error %}
+    <div class="error">Errore nel recupero dei dati: {{ error }}</div>
+  {% else %}
+    <table>
+      <tr>
+        <th>ID</th>
+        <th>Tipo</th>
+        <th>Luogo</th>
+        <th>Unita'</th>
+        <th>Stato</th>
+        <th>Priorita'</th>
+      </tr>
+      {% for incident in incidents %}
+      <tr>
+        <td>{{ incident.id }}</td>
+        <td>{{ incident.type }}</td>
+        <td>{{ incident.location }}</td>
+        <td>{{ incident.assigned_unit or incident.unit }}</td>
+        <td class="status-{{ incident.status }}">{{ incident.status }}</td>
+        <td>{{ incident.priority if incident.priority is not none else "-" }}</td>
+      </tr>
+      {% endfor %}
+    </table>
+  {% endif %}
+</body>
+</html>

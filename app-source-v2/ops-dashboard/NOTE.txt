@@ -1,0 +1,23 @@
+AGGIORNAMENTO ops-dashboard (v2)
+
+Questa cartella contiene un aggiornamento di ops-dashboard che fa parte
+dei requisiti del progetto fin dall'inizio (vedi README_STUDENT, sezioni
+"Cosa dovete costruire voi" e "Deliverable richiesti").
+
+Aggiunge un contatore delle segnalazioni per tipo, sia sul cruscotto sia
+come endpoint JSON dedicato (GET /api/stats).
+
+Quando applicarlo: solo dopo che avete gia' un deploy iniziale funzionante
+e una pipeline che va dal push su GitHub al deploy su EKS. Non serve
+applicarlo subito.
+
+Come applicarlo: sostituite app.py e templates/index.html dentro
+app-source/ops-dashboard con i file di questa cartella, fate commit e
+push. Deve essere la pipeline a costruire la nuova immagine e a fare il
+deploy, non un comando kubectl lanciato a mano.
+
+Cosa dovrete far vedere alla demo: che la versione nuova e' in
+produzione (endpoint /api/stats che risponde, contatori visibili sul
+cruscotto) e che ci e' arrivata attraverso la pipeline, non con un
+intervento manuale (kubectl rollout history vi puo' aiutare a
+dimostrarlo).

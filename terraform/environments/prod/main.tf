@@ -13,7 +13,7 @@ module "ecr" {
   common_tags = module.tags.common_tags
 }
 
-# 2. Modulo VPC 
+# 3. Modulo VPC 
 module "vpc" {
   source = "../../modules/vpc"
 
@@ -23,23 +23,25 @@ module "vpc" {
   common_tags = module.tags.common_tags
 }
 
-# 3. Modulo SECURITY 
+# 4. Modulo SECURITY
 module "security" {
   source = "../../modules/security"
 
-  environment = var.environment
-  common_tags = module.tags.common_tags
-  vpc_id      = module.vpc.vpc_id
+  environment       = var.environment
+  common_tags       = module.tags.common_tags
+  vpc_id            = module.vpc.vpc_id
+  oidc_provider_arn = module.eks.oidc_provider_arn
+  oidc_provider_url = module.eks.oidc_provider_url
 }
 
-# 5. Modulo EKS 
+# 5. Modulo EKS
 module "eks" {
   source = "../../modules/eks"
 
   common_tags      = module.tags.common_tags
-
-  private_subnets  = module.vpc.private_subnet_ids
-  cluster_sg_id    = module.security.cluster_sg_id
+  private_subnets = module.vpc.private_subnet_ids
+  cluster_sg_id   = module.security.cluster_sg_id
   cluster_role_arn = module.security.cluster_role_arn
-  node_role_arn    = module.security.node_role_arn
+  node_role_arn   = module.security.node_role_arn
+  ebs_csi_role_arn = module.security.ebs_csi_role_arn
 }

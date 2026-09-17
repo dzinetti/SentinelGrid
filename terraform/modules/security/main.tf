@@ -121,3 +121,39 @@ resource "aws_iam_role_policy_attachment" "ecr_readonly" {
   policy_arn = "arn:aws:iam::aws:policy/AmazonEC2ContainerRegistryReadOnly"
   role       = aws_iam_role.node_group.name
 }
+
+# ==========================================
+# 3. RUOLO IAM PER EBS CSI DRIVER (IRSA)
+# ==========================================
+
+data "aws_iam_policy_document" "ebs_csi_trust" {
+  statement {
+    actions = ["sts:AssumeRoleWithWebIdentity"]
+    effect  = "Allow"
+
+    condition {
+      test     = "StringEquals"
+      variable = "${var.oidc_provider_url}:sub"
+      values   = ["system:serviceaccount:kube-system:ebs-csi-controller-sa"]
+    }
+
+    principals {
+      identifiers = [var.oidc_provider_arn]
+      type        = "Federated"
+    }
+  }
+}
+
+resource "aws_iam_role" "ebs_csi" {
+  name               = "AmazonEKS_EBS_CSI_DriverRole_SentinelGrid"
+  assume_role_policy = data.aws_iam_policy_document.ebs_csi_trust.json
+
+  tags = merge(var.common_tags, {
+    Name = "AmazonEKS_EBS_CSI_DriverRole_SentinelGrid"
+  })
+}
+
+resource "aws_iam_role_policy_attachment" "ebs_csi_policy" {
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonEBSCSIDriverPolicy"
+  role       = aws_iam_role.ebs_csi.name
+}

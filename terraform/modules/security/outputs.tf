@@ -17,3 +17,9 @@ output "node_role_arn" {
   description = "ARN del ruolo IAM per i Worker Nodes EKS"
   value       = aws_iam_role.node_group.arn
 }
+
+# NUOVO OUTPUT PER EBS CSI DRIVER
+output "ebs_csi_role_arn" {
+  description = "ARN del ruolo IAM per l'EBS CSI Driver"
+  value       = aws_iam_role.ebs_csi.arn
+}

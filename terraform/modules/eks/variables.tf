@@ -22,3 +22,9 @@ variable "node_role_arn" {
   type        = string
   description = "ARN del ruolo IAM per i Worker Nodes"
 }
+
+# NUOVA VARIARIABILE
+variable "ebs_csi_role_arn" {
+  type        = string
+  description = "ARN del ruolo IAM per l'EBS CSI Driver"
+}

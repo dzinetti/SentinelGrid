@@ -38,7 +38,7 @@ phases:
       
       # Stampa a video il manifest per verificare nei log che l'immagine sia corretta
       - echo "Verifica del manifest generato per beacon-api:"
-      - cat k8s/beacon-api/deployment.yaml | grep image:
+      - cat k8s/beacon-api/deployment.yaml | grep "image:"
 
 artifacts:
   files:

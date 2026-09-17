@@ -6,21 +6,12 @@ phases:
       - echo "Autenticazione su Amazon ECR..."
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - export REPO_PREFIX=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      # Estrae l'hash del commit o usa il fallback
-      - export RAW_HASH=${CODEBUILD_RESOLVED_COMMIT_HASH:-$CODEBUILD_SOURCE_VERSION}
-      - export COMMIT_HASH=$(echo $RAW_HASH | cut -c 1-7)
-      - export IMAGE_TAG=${COMMIT_HASH:-build-$CODEBUILD_BUILD_NUMBER}
-      - echo "Using REPO_PREFIX=$REPO_PREFIX"
-      - echo "Using IMAGE_TAG=$IMAGE_TAG"
+      - export COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_COMMIT_HASH | cut -c 1-7)
+      - export IMAGE_TAG=${COMMIT_HASH:-latest}
 
   build:
     commands:
       - echo "Building delle immagini Docker..."
-      - export REPO_PREFIX=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - export RAW_HASH=${CODEBUILD_RESOLVED_COMMIT_HASH:-$CODEBUILD_SOURCE_VERSION}
-      - export COMMIT_HASH=$(echo $RAW_HASH | cut -c 1-7)
-      - export IMAGE_TAG=${COMMIT_HASH:-build-$CODEBUILD_BUILD_NUMBER}
-      
       - docker build -t $REPO_PREFIX/beacon-api:$IMAGE_TAG ./app-source/beacon-api
       - docker build -t $REPO_PREFIX/command-api:$IMAGE_TAG ./app-source/command-api
       - docker build -t $REPO_PREFIX/ops-dashboard:$IMAGE_TAG ./app-source/ops-dashboard
@@ -29,11 +20,6 @@ phases:
   post_build:
     commands:
       - echo "Push su ECR..."
-      - export REPO_PREFIX=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - export RAW_HASH=${CODEBUILD_RESOLVED_COMMIT_HASH:-$CODEBUILD_SOURCE_VERSION}
-      - export COMMIT_HASH=$(echo $RAW_HASH | cut -c 1-7)
-      - export IMAGE_TAG=${COMMIT_HASH:-build-$CODEBUILD_BUILD_NUMBER}
-
       - docker push $REPO_PREFIX/beacon-api:$IMAGE_TAG
       - docker push $REPO_PREFIX/command-api:$IMAGE_TAG
       - docker push $REPO_PREFIX/ops-dashboard:$IMAGE_TAG
@@ -45,8 +31,8 @@ phases:
       - sed -i "s|IMAGE_PLACEHOLDER_OPS|$REPO_PREFIX/ops-dashboard:$IMAGE_TAG|g" k8s/ops-dashboard/deployment.yaml
       - sed -i "s|IMAGE_PLACEHOLDER_TRIAGE|$REPO_PREFIX/triage-worker:$IMAGE_TAG|g" k8s/triage-worker/cronjob.yaml
       
-      - echo "Verifica dei file modificati:"
-      - grep "image:" k8s/triage-worker/cronjob.yaml
+      - echo "Verifica del file modificato:"
+      - grep "image:" k8s/beacon-api/deployment.yaml
 
 artifacts:
   files:

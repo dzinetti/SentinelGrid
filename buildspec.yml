@@ -3,16 +3,21 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - echo "Autenticazione su Amazon ECR..."
+      - echo "Inizio fase di pre-build per SentinelGrid..."
+      - echo "Autenticazione su Amazon ECR nella regione $AWS_DEFAULT_REGION..."
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - REPO_PREFIX=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_COMMIT_HASH | cut -c 1-7)
-      - IMAGE_TAG=${COMMIT_HASH}
-      - echo "Tag immagine generato:" $IMAGE_TAG
+      
+      # Esportazione rigorosa delle variabili per renderle disponibili in build e post_build
+      - export REPO_PREFIX=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - export COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_COMMIT_HASH | cut -c 1-7)
+      - export IMAGE_TAG=${COMMIT_HASH:-latest}
+      
+      - echo "ECR Prefix:" $REPO_PREFIX
+      - echo "Tag Generato:" $IMAGE_TAG
 
   build:
     commands:
-      - echo "Building delle immagini Docker..."
+      - echo "Building e tagging di tutti i 4 microservizi SentinelGrid..."
       - docker build -t $REPO_PREFIX/beacon-api:$IMAGE_TAG ./app-source/beacon-api
       - docker build -t $REPO_PREFIX/command-api:$IMAGE_TAG ./app-source/command-api
       - docker build -t $REPO_PREFIX/ops-dashboard:$IMAGE_TAG ./app-source/ops-dashboard
@@ -20,16 +25,17 @@ phases:
 
   post_build:
     commands:
-      - echo "Push delle immagini su Amazon ECR..."
+      - echo "Push delle immagini nei repository ECR..."
       - docker push $REPO_PREFIX/beacon-api:$IMAGE_TAG
       - docker push $REPO_PREFIX/command-api:$IMAGE_TAG
       - docker push $REPO_PREFIX/ops-dashboard:$IMAGE_TAG
       - docker push $REPO_PREFIX/triage-worker:$IMAGE_TAG
-      - echo "Aggiornamento dinamico dei manifest K8s..."
-      - "sed -i \"s|IMAGE_PLACEHOLDER_BEACON|$REPO_PREFIX/beacon-api:$IMAGE_TAG|g\" k8s/beacon-api/deployment.yaml"
-      - "sed -i \"s|IMAGE_PLACEHOLDER_COMMAND|$REPO_PREFIX/command-api:$IMAGE_TAG|g\" k8s/command-api/deployment.yaml"
-      - "sed -i \"s|IMAGE_PLACEHOLDER_OPS|$REPO_PREFIX/ops-dashboard:$IMAGE_TAG|g\" k8s/ops-dashboard/deployment.yaml"
-      - "sed -i \"s|IMAGE_PLACEHOLDER_TRIAGE|$REPO_PREFIX/triage-worker:$IMAGE_TAG|g\" k8s/triage-worker/cronjob.yaml"
+      
+      - echo "Aggiornamento dinamico dei tag dell'immagine nei manifest Kubernetes..."
+      - sed -i "s|IMAGE_PLACEHOLDER_BEACON|$REPO_PREFIX/beacon-api:$IMAGE_TAG|g" k8s/beacon-api/deployment.yaml
+      - sed -i "s|IMAGE_PLACEHOLDER_COMMAND|$REPO_PREFIX/command-api:$IMAGE_TAG|g" k8s/command-api/deployment.yaml
+      - sed -i "s|IMAGE_PLACEHOLDER_OPS|$REPO_PREFIX/ops-dashboard:$IMAGE_TAG|g" k8s/ops-dashboard/deployment.yaml
+      - sed -i "s|IMAGE_PLACEHOLDER_TRIAGE|$REPO_PREFIX/triage-worker:$IMAGE_TAG|g" k8s/triage-worker/cronjob.yaml
 
 artifacts:
   files:

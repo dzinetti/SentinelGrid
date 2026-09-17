@@ -1,0 +1,48 @@
+version: 0.2
+
+env:
+  variables:
+    AWS_REGION: "eu-west-1"
+
+phases:
+  pre_build:
+    commands:
+      - echo "Login su Amazon ECR..."
+      - AWS_ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+      - aws ecr get-login-password --region $AWS_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com
+      
+      - echo "Generazione del TAG dal commit..."
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_SOURCE_VERSION | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:=v1.0.0}
+      
+      - REPO_URI_BEACON="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/beacon-api"
+      - REPO_URI_COMMAND="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/command-api"
+      - REPO_URI_OPS="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/ops-dashboard"
+      - REPO_URI_TRIAGE="$AWS_ACCOUNT_ID.dkr.ecr.$AWS_REGION.amazonaws.com/triage-worker"
+
+  build:
+    commands:
+      - echo "Build delle immagini Docker..."
+      - docker build -t $REPO_URI_BEACON:$IMAGE_TAG app-source/beacon-api/
+      - docker build -t $REPO_URI_COMMAND:$IMAGE_TAG app-source/command-api/
+      - docker build -t $REPO_URI_OPS:$IMAGE_TAG app-source/ops-dashboard/
+      - docker build -t $REPO_URI_TRIAGE:$IMAGE_TAG app-source/triage-worker/
+
+  post_build:
+    commands:
+      - echo "Push delle immagini su ECR..."
+      - docker push $REPO_URI_BEACON:$IMAGE_TAG
+      - docker push $REPO_URI_COMMAND:$IMAGE_TAG
+      - docker push $REPO_URI_OPS:$IMAGE_TAG
+      - docker push $REPO_URI_TRIAGE:$IMAGE_TAG
+
+      - echo "Aggiornamento dinamico degli IMAGE_URI nei manifest YAML..."
+      - sed -i "s|<AWS_ACCOUNT_ID>.dkr.ecr.eu-west-1.amazonaws.com/beacon-api:latest|$REPO_URI_BEACON:$IMAGE_TAG|g" k8s/04-beacon-api/beacon-api.yaml
+      - sed -i "s|<AWS_ACCOUNT_ID>.dkr.ecr.eu-west-1.amazonaws.com/command-api:latest|$REPO_URI_COMMAND:$IMAGE_TAG|g" k8s/05-command-api/command-api.yaml
+      - sed -i "s|<AWS_ACCOUNT_ID>.dkr.ecr.eu-west-1.amazonaws.com/ops-dashboard:latest|$REPO_URI_OPS:$IMAGE_TAG|g" k8s/06-ops-dashboard/ops-dashboard.yaml
+      - sed -i "s|<AWS_ACCOUNT_ID>.dkr.ecr.eu-west-1.amazonaws.com/triage-worker:latest|$REPO_URI_TRIAGE:$IMAGE_TAG|g" k8s/07-triage-worker/triage-worker.yaml
+
+artifacts:
+  files:
+    - 'k8s/**/*.yaml'
+  name: BuildArtifact

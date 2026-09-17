@@ -6,8 +6,8 @@ phases:
       - echo "Autenticazione su Amazon ECR..."
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - export REPO_PREFIX=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - export COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_COMMIT_HASH | cut -c 1-7)
-      - export IMAGE_TAG=${COMMIT_HASH:-latest}
+      - export COMMIT_HASH=$(echo ${CODEBUILD_RESOLVED_COMMIT_HASH:-$CODEBUILD_SOURCE_VERSION} | cut -c 1-7)
+      - export IMAGE_TAG=${COMMIT_HASH:-build-$CODEBUILD_BUILD_NUMBER}
 
   build:
     commands:

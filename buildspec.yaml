@@ -38,9 +38,9 @@ phases:
 
       - echo "Aggiornamento dinamico degli IMAGE_URI nei manifest YAML..."
       - sed -i "s|<AWS_ACCOUNT_ID>.dkr.ecr.eu-west-1.amazonaws.com/beacon-api:latest|$REPO_URI_BEACON:$IMAGE_TAG|g" k8s/04-beacon-api/beacon-api.yaml
-      - sed -i "s|<AWS_ACCOUNT_ID>.dkr.ecr.eu-west-1.amazonaws.com/command-api:latest|$REPO_URI_COMMAND:$IMAGE_TAG|g" k8s/05-command-api/command-api.yaml
-      - sed -i "s|<AWS_ACCOUNT_ID>.dkr.ecr.eu-west-1.amazonaws.com/ops-dashboard:latest|$REPO_URI_OPS:$IMAGE_TAG|g" k8s/06-ops-dashboard/ops-dashboard.yaml
-      - sed -i "s|<AWS_ACCOUNT_ID>.dkr.ecr.eu-west-1.amazonaws.com/triage-worker:latest|$REPO_URI_TRIAGE:$IMAGE_TAG|g" k8s/07-triage-worker/triage-worker.yaml
+      - sed -i "s|<AWS_ACCOUNT_ID>.dkr.ecr.eu-west-1.amazonaws.com/command-api:latest|$REPO_URI_COMMAND:$IMAGE_TAG|g" k8s/04-command-api/command-api.yaml
+      - sed -i "s|<AWS_ACCOUNT_ID>.dkr.ecr.eu-west-1.amazonaws.com/ops-dashboard:latest|$REPO_URI_OPS:$IMAGE_TAG|g" k8s/04-ops-dashboard/ops-dashboard.yaml
+      - sed -i "s|<AWS_ACCOUNT_ID>.dkr.ecr.eu-west-1.amazonaws.com/triage-worker:latest|$REPO_URI_TRIAGE:$IMAGE_TAG|g" k8s/04-triage-worker/triage-worker.yaml
 
 artifacts:
   files:

@@ -6,8 +6,12 @@ phases:
       - echo "Autenticazione su Amazon ECR..."
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - export REPO_PREFIX=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - export COMMIT_HASH=$(echo ${CODEBUILD_RESOLVED_COMMIT_HASH:-$CODEBUILD_SOURCE_VERSION} | cut -c 1-7)
-      - export IMAGE_TAG=${COMMIT_HASH:-latest}
+      # Estrae l'hash se è un commit hex (40 caratteri), altrimenti usa l'ID di build di CodeBuild
+      - export COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_COMMIT_HASH | cut -c 1-7)
+      - export BUILD_ID_TAG=$(echo $CODEBUILD_BUILD_ID | awk -F':' '{print $2}' | cut -c 1-7)
+      - export IMAGE_TAG=${COMMIT_HASH:-$BUILD_ID_TAG}
+      - echo "Using REPO_PREFIX=$REPO_PREFIX"
+      - echo "Using IMAGE_TAG=$IMAGE_TAG"
 
   build:
     commands:
@@ -32,7 +36,7 @@ phases:
       - sed -i "s|IMAGE_PLACEHOLDER_TRIAGE|$REPO_PREFIX/triage-worker:$IMAGE_TAG|g" k8s/triage-worker/cronjob.yaml
       
       - echo "Verifica del file modificato:"
-      - grep "image:" k8s/beacon-api/deployment.yaml
+      - grep "image:" k8s/triage-worker/cronjob.yaml
 
 artifacts:
   files:

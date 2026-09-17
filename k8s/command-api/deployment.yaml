@@ -13,10 +13,11 @@ spec:
       labels:
         app: command-api
     spec:
+      imagePullSecrets:
+        - name: ecr-secret
       containers:
       - name: command-api
-        image: command-api:1.0.0
-        imagePullPolicy: IfNotPresent
+        image: 889276611436.dkr.ecr.eu-west-1.amazonaws.com/command-api:latest
         ports:
         - containerPort: 8080
         livenessProbe:

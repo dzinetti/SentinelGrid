@@ -13,10 +13,11 @@ spec:
       labels:
         app: ops-dashboard
     spec:
+      imagePullSecrets:
+        - name: ecr-secret
       containers:
       - name: ops-dashboard
-        image: ops-dashboard:1.0.0
-        imagePullPolicy: IfNotPresent
+        image: 889276611436.dkr.ecr.eu-west-1.amazonaws.com/ops-dashboard:latest
         ports:
         - containerPort: 8080
         livenessProbe:

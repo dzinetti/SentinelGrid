@@ -13,10 +13,11 @@ spec:
       labels:
         app: beacon-api
     spec:
+      imagePullSecrets:
+        - name: ecr-secret
       containers:
       - name: beacon-api
-        image: beacon-api:1.0.0
-        imagePullPolicy: IfNotPresent
+        image: 889276611436.dkr.ecr.eu-west-1.amazonaws.com/beacon-api:latest
         ports:
         - containerPort: 8080
         livenessProbe:

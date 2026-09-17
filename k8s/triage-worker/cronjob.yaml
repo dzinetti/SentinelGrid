@@ -4,15 +4,16 @@ metadata:
   name: triage-worker
   namespace: prod
 spec:
-  schedule: "*/5 * * * *"
+  schedule: "*/2 * * * *"
   jobTemplate:
     spec:
       template:
         spec:
+          imagePullSecrets:
+            - name: ecr-secret
           containers:
           - name: triage-worker
-            image: triage-worker:1.0.0
-            imagePullPolicy: IfNotPresent
+            image: 889276611436.dkr.ecr.eu-west-1.amazonaws.com/triage-worker:latest
             envFrom:
             - configMapRef:
                 name: sentinel-config

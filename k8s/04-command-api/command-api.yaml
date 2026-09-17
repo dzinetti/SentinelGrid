@@ -1,0 +1,65 @@
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: command-api
+  namespace: sentinelgrid
+  labels:
+    app: command-api
+spec:
+  type: ClusterIP
+  selector:
+    app: command-api
+  ports:
+    - protocol: TCP
+      port: 8080
+      targetPort: 8080
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: command-api
+  namespace: sentinelgrid
+  labels:
+    app: command-api
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: command-api
+  template:
+    metadata:
+      labels:
+        app: command-api
+    spec:
+      containers:
+        - name: command-api
+          # Placeholder da sostituire con l'IMAGE_URI generato dalla pipeline
+          image: 889276611436.dkr.ecr.eu-west-1.amazonaws.com/command-api:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8080
+          env:
+            - name: BEACON_API_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: sentinelgrid-config
+                  key: BEACON_API_URL
+            - name: API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: sentinelgrid-secrets
+                  key: API_KEY
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: 8080
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /readyz
+              port: 8080
+            initialDelaySeconds: 2
+            periodSeconds: 5

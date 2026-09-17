@@ -1,0 +1,35 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: triage-worker
+  namespace: sentinelgrid
+  labels:
+    app: triage-worker
+spec:
+  schedule: "*/5 * * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 1
+  jobTemplate:
+    spec:
+      template:
+        metadata:
+          labels:
+            app: triage-worker
+        spec:
+          restartPolicy: OnFailure
+          containers:
+            - name: triage-worker
+              # Placeholder da sostituire con l'IMAGE_URI generato dalla pipeline
+              image: 889276611436.dkr.ecr.eu-west-1.amazonaws.com/triage-worker:latest
+              imagePullPolicy: IfNotPresent
+              env:
+                - name: BEACON_API_URL
+                  valueFrom:
+                    configMapKeyRef:
+                      name: sentinelgrid-config
+                      key: BEACON_API_URL
+                - name: API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: sentinelgrid-secrets
+                      key: API_KEY

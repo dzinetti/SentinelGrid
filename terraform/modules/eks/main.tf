@@ -8,7 +8,6 @@ resource "aws_eks_cluster" "main" {
     security_group_ids = [var.cluster_sg_id]
   }
 
-  # Forzo la modalità di autenticazione per abilitare le Access Entry nativamente
   access_config {
     authentication_mode = "API_AND_CONFIG_MAP"
   }
@@ -73,10 +72,14 @@ resource "aws_eks_addon" "ebs_csi" {
   ]
 }
 
-# 5. Access Entry per CodePipeline (Deploy Step)
+# ------------------------------------------------------------------------------
+# EKS ACCESS ENTRIES (CI/CD Roles)
+# ------------------------------------------------------------------------------
+
+# Access Entry per CodePipeline (Deploy Step - SentinelGrid)
 resource "aws_eks_access_entry" "codepipeline" {
   cluster_name  = aws_eks_cluster.main.name
-  principal_arn = "arn:aws:iam::889276611436:role/service-role/AWSCodePipelineServiceRole-eu-west-1-Kubernetes-junior-catalog"
+  principal_arn = "arn:aws:iam::889276611436:role/service-role/AWSCodePipelineServiceRole-eu-west-1-sentinelgrid-pipeline-v2"
   type          = "STANDARD"
 }
 
@@ -90,7 +93,7 @@ resource "aws_eks_access_policy_association" "codepipeline_admin" {
   }
 }
 
-# 6. Access Entry per CodeBuild (Build Step)
+# Access Entry per CodeBuild (Build Step - SentinelGrid)
 resource "aws_eks_access_entry" "codebuild" {
   cluster_name  = aws_eks_cluster.main.name
   principal_arn = "arn:aws:iam::889276611436:role/service-role/codebuild-SentinelGrid-CodeBuild-2-service-role"

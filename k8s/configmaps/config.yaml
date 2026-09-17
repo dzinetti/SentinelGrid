@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: sentinel-config
+  namespace: prod
+data:
+  BEACON_API_URL: "http://beacon-api:8080"
+  COMMAND_API_URL: "http://command-api:8080"

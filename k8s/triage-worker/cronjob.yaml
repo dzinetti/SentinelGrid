@@ -1,0 +1,21 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: triage-worker
+  namespace: prod
+spec:
+  schedule: "*/5 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: triage-worker
+            image: triage-worker:1.0.0
+            imagePullPolicy: IfNotPresent
+            envFrom:
+            - configMapRef:
+                name: sentinel-config
+            - secretRef:
+                name: sentinel-secret
+          restartPolicy: OnFailure

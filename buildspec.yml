@@ -5,16 +5,12 @@ phases:
     commands:
       - echo "Autenticazione su Amazon ECR..."
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - REPO_PREFIX=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
-      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_COMMIT_HASH | cut -c 1-7)
-      - IMAGE_TAG=${COMMIT_HASH:-latest}
-      # Salva le variabili su file di ambiente locale per riutilizzarle nelle fasi successive
-      - echo "export REPO_PREFIX=$REPO_PREFIX" >> /tmp/env_vars
-      - echo "export IMAGE_TAG=$IMAGE_TAG" >> /tmp/env_vars
+      - export REPO_PREFIX=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - export COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_COMMIT_HASH | cut -c 1-7)
+      - export IMAGE_TAG=${COMMIT_HASH:-latest}
 
   build:
     commands:
-      - source /tmp/env_vars
       - echo "Building delle immagini Docker..."
       - docker build -t $REPO_PREFIX/beacon-api:$IMAGE_TAG ./app-source/beacon-api
       - docker build -t $REPO_PREFIX/command-api:$IMAGE_TAG ./app-source/command-api
@@ -23,22 +19,20 @@ phases:
 
   post_build:
     commands:
-      - source /tmp/env_vars
-      - echo "Push delle immagini su ECR..."
+      - echo "Push su ECR..."
       - docker push $REPO_PREFIX/beacon-api:$IMAGE_TAG
       - docker push $REPO_PREFIX/command-api:$IMAGE_TAG
       - docker push $REPO_PREFIX/ops-dashboard:$IMAGE_TAG
       - docker push $REPO_PREFIX/triage-worker:$IMAGE_TAG
       
-      - echo "Sostituzione segnaposto nei manifest K8s..."
+      - echo "Sostituzione segnaposto..."
       - sed -i "s|IMAGE_PLACEHOLDER_BEACON|$REPO_PREFIX/beacon-api:$IMAGE_TAG|g" k8s/beacon-api/deployment.yaml
       - sed -i "s|IMAGE_PLACEHOLDER_COMMAND|$REPO_PREFIX/command-api:$IMAGE_TAG|g" k8s/command-api/deployment.yaml
       - sed -i "s|IMAGE_PLACEHOLDER_OPS|$REPO_PREFIX/ops-dashboard:$IMAGE_TAG|g" k8s/ops-dashboard/deployment.yaml
       - sed -i "s|IMAGE_PLACEHOLDER_TRIAGE|$REPO_PREFIX/triage-worker:$IMAGE_TAG|g" k8s/triage-worker/cronjob.yaml
       
-      # Stampa a video il manifest per verificare nei log che l'immagine sia corretta
-      - echo "Verifica del manifest generato per beacon-api:"
-      - cat k8s/beacon-api/deployment.yaml | grep "image:"
+      - echo "Verifica del file modificato:"
+      - grep "image:" k8s/beacon-api/deployment.yaml
 
 artifacts:
   files:

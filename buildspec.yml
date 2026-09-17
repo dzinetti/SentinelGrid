@@ -3,15 +3,17 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - echo Logging in to Amazon ECR...
+      - echo "Autenticazione su Amazon ECR..."
       - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
       - REPO_PREFIX=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      # Estrazione del Tag unico basato sui primi 7 caratteri del commit Git
       - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_COMMIT_HASH | cut -c 1-7)
-      - IMAGE_TAG=${COMMIT_HASH:-latest}
+      - IMAGE_TAG=${COMMIT_HASH}
+      - echo "Tag immagine generato dal commit:" $IMAGE_TAG
 
   build:
     commands:
-      - echo Building Docker images...
+      - echo "Building delle immagini Docker..."
       - docker build -t $REPO_PREFIX/beacon-api:$IMAGE_TAG ./app-source/beacon-api
       - docker build -t $REPO_PREFIX/command-api:$IMAGE_TAG ./app-source/command-api
       - docker build -t $REPO_PREFIX/ops-dashboard:$IMAGE_TAG ./app-source/ops-dashboard
@@ -19,12 +21,21 @@ phases:
 
   post_build:
     commands:
-      - echo Pushing Docker images to ECR...
+      - echo "Push delle immagini su Amazon ECR..."
       - docker push $REPO_PREFIX/beacon-api:$IMAGE_TAG
       - docker push $REPO_PREFIX/command-api:$IMAGE_TAG
       - docker push $REPO_PREFIX/ops-dashboard:$IMAGE_TAG
       - docker push $REPO_PREFIX/triage-worker:$IMAGE_TAG
-      - echo Build completed successfully.
+      
+      - echo "Aggiornamento dinamico degli IMAGE_URI nei manifest K8s..."
+      # Sostituzione dinamica del tag/URI all'interno dei file manifest prima del deploy
+      - sed -i "s|IMAGE_PLACEHOLDER_BEACON|$REPO_PREFIX/beacon-api:$IMAGE_TAG|g" k8s/beacon-api/deployment.yaml
+      - sed -i "s|IMAGE_PLACEHOLDER_COMMAND|$REPO_PREFIX/command-api:$IMAGE_TAG|g" k8s/command-api/deployment.yaml
+      - sed -i "s|IMAGE_PLACEHOLDER_OPS|$REPO_PREFIX/ops-dashboard:$IMAGE_TAG|g" k8s/ops-dashboard/deployment.yaml
+      - sed -i "s|IMAGE_PLACEHOLDER_TRIAGE|$REPO_PREFIX/triage-worker:$IMAGE_TAG|g" k8s/triage-worker/cronjob.yaml
+      
+      - echo "Verifica dei manifest aggiornati..."
+      - cat k8s/beacon-api/deployment.yaml | grep image:
 
 artifacts:
   files:

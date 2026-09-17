@@ -17,7 +17,7 @@ spec:
         - name: ecr-secret
       containers:
       - name: command-api
-        image: 889276611436.dkr.ecr.eu-west-1.amazonaws.com/command-api:latest
+        image: IMAGE_PLACEHOLDER_COMMAND
         ports:
         - containerPort: 8080
         livenessProbe:

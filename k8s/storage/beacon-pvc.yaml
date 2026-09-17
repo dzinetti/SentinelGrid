@@ -6,6 +6,7 @@ metadata:
 spec:
   accessModes:
     - ReadWriteOnce
+  storageClassName: gp2  # <--- Modifica questa riga
   resources:
     requests:
       storage: 1Gi

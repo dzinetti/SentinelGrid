@@ -13,7 +13,7 @@ spec:
             - name: ecr-secret
           containers:
           - name: triage-worker
-            image: 889276611436.dkr.ecr.eu-west-1.amazonaws.com/triage-worker:latest
+            image: IMAGE_PLACEHOLDER_TRIAGE
             envFrom:
             - configMapRef:
                 name: sentinel-config

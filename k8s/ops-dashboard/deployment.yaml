@@ -17,7 +17,7 @@ spec:
         - name: ecr-secret
       containers:
       - name: ops-dashboard
-        image: 889276611436.dkr.ecr.eu-west-1.amazonaws.com/ops-dashboard:latest
+        image: IMAGE_PLACEHOLDER_OPS
         ports:
         - containerPort: 8080
         livenessProbe:

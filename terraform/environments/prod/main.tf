@@ -39,9 +39,13 @@ module "eks" {
   source = "../../modules/eks"
 
   common_tags      = module.tags.common_tags
-  private_subnets = module.vpc.private_subnet_ids
-  cluster_sg_id   = module.security.cluster_sg_id
+  private_subnets  = module.vpc.private_subnet_ids
+  cluster_sg_id    = module.security.cluster_sg_id
   cluster_role_arn = module.security.cluster_role_arn
-  node_role_arn   = module.security.node_role_arn
+  node_role_arn    = module.security.node_role_arn
   ebs_csi_role_arn = module.security.ebs_csi_role_arn
+
+  # Valori dinamici ottenuti da data.tf
+  codepipeline_role_arn = data.aws_iam_role.codepipeline.arn
+  codebuild_role_arn    = data.aws_iam_role.codebuild.arn
 }

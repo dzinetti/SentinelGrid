@@ -1,4 +1,7 @@
-# 1. EKS Cluster (Control Plane)
+# 1. Rileva automaticamente l'identità IAM locale che esegue Terraform
+data "aws_caller_identity" "current" {}
+
+# 2. EKS Cluster (Control Plane)
 resource "aws_eks_cluster" "main" {
   name     = "sentinelgrid-eks-cluster"
   role_arn = var.cluster_role_arn
@@ -20,7 +23,7 @@ resource "aws_eks_cluster" "main" {
   )
 }
 
-# 2. OIDC Provider per il Cluster EKS (IRSA)
+# 3. OIDC Provider per il Cluster EKS (IRSA)
 data "tls_certificate" "main" {
   url = aws_eks_cluster.main.identity[0].oidc[0].issuer
 }
@@ -38,7 +41,7 @@ resource "aws_iam_openid_connect_provider" "main" {
   )
 }
 
-# 3. EKS Managed Node Group (Worker Nodes)
+# 4. EKS Managed Node Group (Worker Nodes)
 resource "aws_eks_node_group" "main" {
   cluster_name    = aws_eks_cluster.main.name
   node_group_name = "sentinelgrid-node-group"
@@ -61,7 +64,7 @@ resource "aws_eks_node_group" "main" {
   )
 }
 
-# 4. Add-on AWS EBS CSI Driver
+# 5. Add-on AWS EBS CSI Driver
 resource "aws_eks_addon" "ebs_csi" {
   cluster_name             = aws_eks_cluster.main.name
   addon_name               = "aws-ebs-csi-driver"
@@ -73,37 +76,58 @@ resource "aws_eks_addon" "ebs_csi" {
 }
 
 # ------------------------------------------------------------------------------
-# EKS ACCESS ENTRIES (CI/CD Roles)
+# EKS ACCESS ENTRIES (NATIVE RBAC)
 # ------------------------------------------------------------------------------
 
-# Access Entry per CodePipeline (Deploy Step - SentinelGrid)
-resource "aws_eks_access_entry" "codepipeline" {
+# Access Entry automatica per l'utente/ruolo IAM locale che esegue Terraform
+resource "aws_eks_access_entry" "current_caller" {
   cluster_name  = aws_eks_cluster.main.name
-  principal_arn = "arn:aws:iam::889276611436:role/service-role/AWSCodePipelineServiceRole-eu-west-1-sentinelgrid-pipeline-v2"
+  principal_arn = data.aws_caller_identity.current.arn
   type          = "STANDARD"
 }
 
-resource "aws_eks_access_policy_association" "codepipeline_admin" {
+resource "aws_eks_access_policy_association" "current_caller_admin" {
   cluster_name  = aws_eks_cluster.main.name
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  principal_arn = aws_eks_access_entry.codepipeline.principal_arn
+  principal_arn = aws_eks_access_entry.current_caller.principal_arn
 
   access_scope {
     type = "cluster"
   }
 }
 
-# Access Entry per CodeBuild (Build Step - SentinelGrid)
-resource "aws_eks_access_entry" "codebuild" {
+# Access Entry per CodePipeline
+resource "aws_eks_access_entry" "codepipeline" {
+  count         = var.codepipeline_role_arn != "" ? 1 : 0
   cluster_name  = aws_eks_cluster.main.name
-  principal_arn = "arn:aws:iam::889276611436:role/service-role/codebuild-SentinelGrid-CodeBuild-2-service-role"
+  principal_arn = var.codepipeline_role_arn
+  type          = "STANDARD"
+}
+
+resource "aws_eks_access_policy_association" "codepipeline_admin" {
+  count         = var.codepipeline_role_arn != "" ? 1 : 0
+  cluster_name  = aws_eks_cluster.main.name
+  policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
+  principal_arn = aws_eks_access_entry.codepipeline[0].principal_arn
+
+  access_scope {
+    type = "cluster"
+  }
+}
+
+# Access Entry per CodeBuild
+resource "aws_eks_access_entry" "codebuild" {
+  count         = var.codebuild_role_arn != "" ? 1 : 0
+  cluster_name  = aws_eks_cluster.main.name
+  principal_arn = var.codebuild_role_arn
   type          = "STANDARD"
 }
 
 resource "aws_eks_access_policy_association" "codebuild_admin" {
+  count         = var.codebuild_role_arn != "" ? 1 : 0
   cluster_name  = aws_eks_cluster.main.name
   policy_arn    = "arn:aws:eks::aws:cluster-access-policy/AmazonEKSClusterAdminPolicy"
-  principal_arn = aws_eks_access_entry.codebuild.principal_arn
+  principal_arn = aws_eks_access_entry.codebuild[0].principal_arn
 
   access_scope {
     type = "cluster"

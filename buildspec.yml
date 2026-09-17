@@ -1,0 +1,31 @@
+version: 0.2
+
+phases:
+  pre_build:
+    commands:
+      - echo Logging in to Amazon ECR...
+      - aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - REPO_PREFIX=$AWS_ACCOUNT_ID.dkr.ecr.$AWS_DEFAULT_REGION.amazonaws.com
+      - COMMIT_HASH=$(echo $CODEBUILD_RESOLVED_COMMIT_HASH | cut -c 1-7)
+      - IMAGE_TAG=${COMMIT_HASH:-latest}
+
+  build:
+    commands:
+      - echo Building Docker images...
+      - docker build -t $REPO_PREFIX/beacon-api:$IMAGE_TAG ./app-source/beacon-api
+      - docker build -t $REPO_PREFIX/command-api:$IMAGE_TAG ./app-source/command-api
+      - docker build -t $REPO_PREFIX/ops-dashboard:$IMAGE_TAG ./app-source/ops-dashboard
+      - docker build -t $REPO_PREFIX/triage-worker:$IMAGE_TAG ./app-source/triage-worker
+
+  post_build:
+    commands:
+      - echo Pushing Docker images to ECR...
+      - docker push $REPO_PREFIX/beacon-api:$IMAGE_TAG
+      - docker push $REPO_PREFIX/command-api:$IMAGE_TAG
+      - docker push $REPO_PREFIX/ops-dashboard:$IMAGE_TAG
+      - docker push $REPO_PREFIX/triage-worker:$IMAGE_TAG
+      - echo Build completed successfully.
+
+artifacts:
+  files:
+    - 'k8s/**/*'

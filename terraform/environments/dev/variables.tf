@@ -1,36 +1,29 @@
 variable "aws_region" {
-  type    = string
-  default = "eu-west-1"
+  type        = string
+  description = "Regione AWS di deploy"
+  default     = "eu-west-1"
 }
 
-variable "project_name" {
-  type    = string
-  default = "terraform-junior"
+variable "CentroDiCosto" {
+  type        = string
+  description = "Centro di costo da assegnare ai tag"
+  default     = "CloudLab_Campus"
 }
 
 variable "environment" {
-  type = string
-  validation {
-    condition     = contains(["dev", "test"], var.environment)
-    error_message = "environment deve essere dev oppure test."
-  }
+  type        = string
+  description = "Ambiente di deploy (dev,prod)"
 }
 
-variable "owner" { type = string }
-variable "vpc_cidr" { type = string }
+variable "vpc_cidr" {
+  type        = string
+  description = "Blocco CIDR per la VPC"
+}
 
 variable "subnets" {
   type = map(object({
     cidr = string
     az   = string
   }))
-}
-
-variable "rules" {
-  type = map(object({
-    from_port   = number
-    to_port     = number
-    ip_protocol = string
-    description = string
-  }))
+  description = "Mappa delle subnet pubbliche e private"
 }
